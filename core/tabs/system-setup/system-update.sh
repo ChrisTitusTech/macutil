@@ -2,109 +2,55 @@
 
 . ../common-script.sh
 
-fastUpdate() {
-    case "$PACKAGER" in
-        pacman)
-            "$AUR_HELPER" -S --needed --noconfirm rate-mirrors-bin
-
-            printf "%b\n" "${YELLOW}Generating a new list of mirrors using rate-mirrors. This process may take a few seconds...${RC}"
-
-            if [ -s "/etc/pacman.d/mirrorlist" ]; then
-                "$ESCALATION_TOOL" cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-            fi
-
-            # If for some reason DTYPE is still unknown use always arch so the rate-mirrors does not fail
-            dtype_local="$DTYPE"
-            if [ "$dtype_local" = "unknown" ]; then
-                dtype_local="arch"
-            fi
-
-            if ! "$ESCALATION_TOOL" rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root "$dtype_local" > /dev/null || [ ! -s "/etc/pacman.d/mirrorlist" ]; then
-                printf "%b\n" "${RED}Rate-mirrors failed, restoring backup.${RC}"
-                "$ESCALATION_TOOL" cp /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
-            fi
-            ;;
-        apt-get|nala)
-            if [ "$PACKAGER" = "apt-get" ]; then
-                printf "%b\n" "${YELLOW}Installing nala for faster updates.${RC}"
-                "$ESCALATION_TOOL" "$PACKAGER" update
-                if "$ESCALATION_TOOL" "$PACKAGER" install -y nala; then
-                    PACKAGER="nala";
-                    printf "%b\n" "${CYAN}Using $PACKAGER as package manager${RC}"
-                else
-                    printf "%b\n" "${RED}Nala installation failed.${RC}"
-                    printf "%b\n" "${YELLOW}Falling back to apt-get.${RC}"
-                fi
-            fi
-
-            if [ "$PACKAGER" = "nala" ]; then
-                if [ -f "/etc/apt/sources.list.d/nala-sources.list" ]; then
-                    "$ESCALATION_TOOL" cp /etc/apt/sources.list.d/nala-sources.list /etc/apt/sources.list.d/nala-sources.list.bak
-                fi
-                if ! "$ESCALATION_TOOL" nala fetch --auto -y || [ ! -s "/etc/apt/sources.list.d/nala-sources.list" ]; then
-                    printf "%b\n" "${RED}Nala fetch failed, restoring backup.${RC}"
-                    "$ESCALATION_TOOL" cp /etc/apt/sources.list.d/nala-sources.list.bak /etc/apt/sources.list.d/nala-sources.list
-                fi
-            fi
-            ;;
-        dnf)
-            "$ESCALATION_TOOL" "$PACKAGER" update -y
-            ;;
-        zypper)
-            "$ESCALATION_TOOL" "$PACKAGER" ref
-            ;;
-        apk)
-            "$ESCALATION_TOOL" "$PACKAGER" update
-            ;;
-        xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -S
-            ;;
-        eopkg)
-            "$ESCALATION_TOOL" "$PACKAGER" -y update-repo
-            ;;
-        *)
-            printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
-            exit 1
-            ;;
-    esac
+updateHomebrew() {
+    printf "%b\n" "${YELLOW}Updating Homebrew packages...${RC}"
+    
+    # Update Homebrew itself
+    printf "%b\n" "${CYAN}Updating Homebrew...${RC}"
+    brew update
+    
+    # Upgrade all installed packages
+    printf "%b\n" "${CYAN}Upgrading installed packages...${RC}"
+    brew upgrade
+    
+    # Clean up old versions and cache
+    printf "%b\n" "${CYAN}Cleaning up old versions and cache...${RC}"
+    brew cleanup
+    brew autoremove
 }
 
-updateSystem() {
-    printf "%b\n" "${YELLOW}Updating system packages.${RC}"
-    case "$PACKAGER" in
-        apt-get|nala|dnf|eopkg)
-            "$ESCALATION_TOOL" "$PACKAGER" upgrade -y
-            ;;
-        pacman)
-            "$ESCALATION_TOOL" "$PACKAGER" -Sy --noconfirm --needed archlinux-keyring
-            "$AUR_HELPER" -Su --noconfirm
-            ;;
-        zypper)
-            "$ESCALATION_TOOL" "$PACKAGER" --non-interactive dup
-            ;;
-        apk)
-            "$ESCALATION_TOOL" "$PACKAGER" upgrade
-            ;;
-        xbps-install)
-            "$ESCALATION_TOOL" "$PACKAGER" -yu
-            ;;
-        *)
-            printf "%b\n" "${RED}Unsupported package manager: ${PACKAGER}${RC}"
-            exit 1
-            ;;
-    esac
-}
-
-updateFlatpaks() {
-    if command_exists flatpak; then
-        printf "%b\n" "${YELLOW}Updating flatpak packages.${RC}"
-        flatpak update -y
+updateMacAppStore() {
+    if command_exists "mas"; then
+        printf "%b\n" "${YELLOW}Updating Mac App Store applications...${RC}"
+        mas upgrade
+    else
+        printf "%b\n" "${YELLOW}Installing mas-cli for Mac App Store updates...${RC}"
+        if brew install mas; then
+            printf "%b\n" "${CYAN}Updating Mac App Store applications...${RC}"
+            mas upgrade
+        else
+            printf "%b\n" "${RED}Failed to install mas-cli. Skipping Mac App Store updates.${RC}"
+        fi
     fi
 }
 
+updateCasks() {
+    printf "%b\n" "${YELLOW}Updating Homebrew Casks...${RC}"
+    
+    # Get list of outdated casks
+    outdated_casks=$(brew outdated --cask 2>/dev/null)
+    
+    if [ -n "$outdated_casks" ]; then
+        printf "%b\n" "${CYAN}Upgrading outdated casks...${RC}"
+        brew upgrade --cask
+    else
+        printf "%b\n" "${GREEN}No outdated casks found.${RC}"
+    fi
+}
+
+printf "%b\n" "${GREEN}System update completed!${RC}"
+
 checkEnv
-checkAURHelper
-checkEscalationTool
-fastUpdate
-updateSystem
-updateFlatpaks
+updateHomebrew
+updateCasks
+updateMacAppStore

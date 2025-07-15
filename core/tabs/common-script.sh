@@ -28,10 +28,37 @@ checkCommandRequirements() {
 
 checkPackageManager() {
     ## Check if brew is installed
-    if command_exists "brew"; then
-        printf "%b\n" "${GREEN}Homebrew is installed${RC}"
+    if command -v brew >/dev/null 2>&1; then
+        printf "%b\n" "${GREEN}Homebrew is already installed.${RC}"
+        # Ensure Homebrew is in PATH for the current session
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -f "/opt/homebrew/bin/brew" ]; then
+        printf "%b\n" "${GREEN}Homebrew is installed but not in PATH. Adding to PATH...${RC}"
+        # Add Homebrew to PATH and source it immediately
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.zprofile"
+        eval "$(/opt/homebrew/bin/brew shellenv)"
     else
-        printf "%b\n" "${RED}Homebrew is not installed${RC}"
+        printf "%b\n" "${YELLOW}Homebrew is required but not installed. Installing Homebrew...${RC}"
+        installHomebrew
+
+        # Add Homebrew to PATH and source it immediately
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.zprofile"
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+}
+
+installHomebrew() {
+    ## Install Homebrew if not present
+    printf "%b\n" "${CYAN}Downloading and installing Homebrew...${RC}"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    
+    # Check if installation was successful by checking if the brew binary exists
+    if [ -f "/opt/homebrew/bin/brew" ]; then
+        printf "%b\n" "${GREEN}Homebrew installed successfully!${RC}"
+    else
+        printf "%b\n" "${RED}Homebrew installation failed. Please install manually.${RC}"
+        printf "%b\n" "${YELLOW}Visit: https://brew.sh for manual installation instructions${RC}"
+        exit 1
     fi
 }
 
