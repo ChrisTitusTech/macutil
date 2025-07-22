@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
         x:Class="MacUtilGUI.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="{Binding Title}"
+        Title="MacUtil GUI - Script Runner"
         Width="1000" Height="700"
         MinWidth="800" MinHeight="600">
 
