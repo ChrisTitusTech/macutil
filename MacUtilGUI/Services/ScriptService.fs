@@ -178,7 +178,7 @@ module ScriptService =
                     raise (System.Exception("Not running on UNIX!"))
 
                 // Now detect if it isn't running on macOS with osascript checks
-                if not (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform Runtime.InteropServices.OSPlatform.OSX) then
+                if not (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(Runtime.InteropServices.OSPlatform.OSX)) then
                     raise (System.Exception("Not running on macOS"))
 
                 // Get the script content from embedded resources
