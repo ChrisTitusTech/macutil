@@ -14,6 +14,7 @@ body:
       label: macOS Version
       multiple: false
       options:
+        - Tahoe (26.x)
         - Sequoia (15.x)
         - Sonoma (14.x)
         - Ventura (13.x)
@@ -82,8 +83,9 @@ body:
       label: Reproduction Steps
       description: Detailed steps that reproduce the bug.
       placeholder: |
-        1. Ran the '...' script
-        2. It ran until '...'
+        1. I ran the '...' script
+        2. It ran successfully and did these '...' things
+        3. But then... (go to next field)
     validations:
       required: true
   - type: textarea
