@@ -13,15 +13,14 @@ body:
     attributes:
       label: macOS Version
       multiple: false
-      description: Select your macOS version.
       options:
-        - macOS Sequoia (15.x)
-        - macOS Sonoma (14.x)
-        - macOS Ventura (13.x)
-        - macOS Monterey (12.x)
-        - macOS Big Sur (11.x)
-        - macOS Catalina (10.15)
-        - macOS Mojave (10.14)
+        - Sequoia (15.x)
+        - Sonoma (14.x)
+        - Ventura (13.x)
+        - Monterey (12.x)
+        - Big Sur (11.x)
+        - Catalina (10.15)
+        - Mojave (10.14)
         - Other
     validations:
       required: true
@@ -36,9 +35,8 @@ body:
   - type: dropdown
     id: mac-architecture
     attributes:
-      label: Mac Architecture
+      label: Mac Processor Type
       multiple: false
-      description: Select your Mac's processor type.
       options:
         - Apple Silicon / ARM
         - Intel / x86
@@ -85,10 +83,8 @@ body:
       label: Reproduction Steps
       description: Detailed steps to reproduce the behavior.
       placeholder: |
-        1. Go to '...'
-        2. Click on '...'
-        3. Scroll down to '...'
-        4. See error
+        1. Tried to use script '...'
+        2. It ran until this point '...'
     validations:
       required: true
   - type: textarea
