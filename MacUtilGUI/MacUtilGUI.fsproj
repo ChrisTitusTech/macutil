@@ -18,6 +18,23 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <DebugType>embedded</DebugType>
+    
+    <!-- macOS specific properties -->
+    <UseAppHost>true</UseAppHost>
+    <RuntimeIdentifiers>osx-x64;osx-arm64</RuntimeIdentifiers>
+    
+    <!-- macOS Bundle Properties -->
+    <CFBundleName>MacUtil</CFBundleName>
+    <CFBundleDisplayName>MacUtil GUI</CFBundleDisplayName>
+    <CFBundleIdentifier>com.macutil.gui</CFBundleIdentifier>
+    <CFBundleVersion>0.2.0</CFBundleVersion>
+    <CFBundleShortVersionString>0.2.0</CFBundleShortVersionString>
+    <CFBundlePackageType>APPL</CFBundlePackageType>
+    <CFBundleSignature>????</CFBundleSignature>
+    <CFBundleExecutable>MacUtilGUI</CFBundleExecutable>
+    <CFBundleIconFile>MacUtilGUI.icns</CFBundleIconFile>
+    <NSPrincipalClass>NSApplication</NSPrincipalClass>
+    <NSHighResolutionCapable>true</NSHighResolutionCapable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,6 +56,7 @@
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.10" />
     <PackageReference Include="Tomlyn" Version="0.17.0" />
+    <PackageReference Include="Dotnet.Bundle" Version="*" />
   </ItemGroup>
 
   <!-- Trim-friendly settings for Avalonia -->

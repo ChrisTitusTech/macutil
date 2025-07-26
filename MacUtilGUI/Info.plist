@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIconFile</key>
+    <string>MacUtilGUI.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.macutil.gui</string>
+    <key>CFBundleName</key>
+    <string>MacUtil</string>
+    <key>CFBundleDisplayName</key>
+    <string>MacUtil GUI</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    <key>CFBundleExecutable</key>
+    <string>MacUtilGUI</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSRequiresAquaSystemAppearance</key>
+    <false/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2025 MacUtil. All rights reserved.</string>
+</dict>
+</plist>

@@ -1,8 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MacUtilGUI.App"
-             RequestedThemeVariant="Default">
-    <!-- macOS-compliant theme with automatic light/dark mode support -->
+             RequestedThemeVariant="Dark">
+    <!-- macOS-compliant dark theme optimized for AcrylicBlur -->
 
     <Application.DataTemplates>
         <!-- <local:ViewLocator /> -->
@@ -11,166 +11,125 @@
     <Application.Styles>
         <FluentTheme />
         
-        <!-- macOS Light Mode Styles -->
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] Border.macos-panel">
-            <Setter Property="Background" Value="#F5F5F7"/>
-            <Setter Property="BorderBrush" Value="#E5E5E7"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BoxShadow" Value="0 1 3 0 #00000020"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] Border.macos-content">
-            <Setter Property="Background" Value="#FFFFFF"/>
-            <Setter Property="BorderBrush" Value="#E5E5E7"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] TextBlock.macos-title">
-            <Setter Property="Foreground" Value="#1D1D1F"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] TextBlock.macos-body">
-            <Setter Property="Foreground" Value="#1D1D1F"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] TextBlock.macos-secondary">
-            <Setter Property="Foreground" Value="#6E6E73"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] Button.macos-accent">
-            <Setter Property="Background" Value="#007AFF"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="CornerRadius" Value="6"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] Button.macos-accent:pointerover">
-            <Setter Property="Background" Value="#0056CC"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] Button.macos-accent:pressed">
-            <Setter Property="Background" Value="#004AAD"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] Button.macos-list-item">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#1D1D1F"/>
-            <Setter Property="BorderBrush" Value="#E5E5E7"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] Button.macos-list-item:pointerover">
-            <Setter Property="Background" Value="#F5F5F7"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] ScrollViewer.macos-terminal">
-            <Setter Property="Background" Value="#000000"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Light] TextBlock.macos-terminal">
-            <Setter Property="Foreground" Value="#00FF00"/>
-            <Setter Property="Background" Value="#000000"/>
-        </Style>
-        
-        <!-- macOS Dark Mode Styles -->
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] Border.macos-panel">
-            <Setter Property="Background" Value="#2C2C2E"/>
-            <Setter Property="BorderBrush" Value="#3A3A3C"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BoxShadow" Value="0 1 3 0 #00000040"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] Border.macos-content">
-            <Setter Property="Background" Value="#1C1C1E"/>
-            <Setter Property="BorderBrush" Value="#3A3A3C"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] TextBlock.macos-title">
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] TextBlock.macos-body">
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] TextBlock.macos-secondary">
-            <Setter Property="Foreground" Value="#8E8E93"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] Button.macos-accent">
-            <Setter Property="Background" Value="#0A84FF"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="CornerRadius" Value="6"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] Button.macos-accent:pointerover">
-            <Setter Property="Background" Value="#409CFF"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] Button.macos-accent:pressed">
-            <Setter Property="Background" Value="#0969DA"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] Button.macos-list-item">
-            <Setter Property="Background" Value="#1C1C1E"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-            <Setter Property="BorderBrush" Value="#3A3A3C"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] Button.macos-list-item:pointerover">
-            <Setter Property="Background" Value="#2C2C2E"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] ScrollViewer.macos-terminal">
-            <Setter Property="Background" Value="#000000"/>
-        </Style>
-        
-        <Style Selector=":is(Application)[RequestedThemeVariant=Dark] TextBlock.macos-terminal">
-            <Setter Property="Foreground" Value="#00FF00"/>
-            <Setter Property="Background" Value="#000000"/>
-        </Style>
-        
-        <!-- Default styles that apply to both themes -->
+        <!-- Base styles applying to both themes -->
         <Style Selector="Border.macos-window">
-            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="CornerRadius" Value="15"/>
+            <Setter Property="BoxShadow" Value="0 8 32 0 #40000000"/>
+        </Style>
+        
+        <!-- Base typography -->
+        <Style Selector="TextBlock.macos-title, TextBlock.macos-body">
+            <Setter Property="FontFamily" Value="SF Pro Display,SF Pro Text,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif"/>
         </Style>
         
         <Style Selector="TextBlock.macos-title">
-            <Setter Property="FontFamily" Value="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif"/>
             <Setter Property="FontWeight" Value="Bold"/>
         </Style>
         
         <Style Selector="TextBlock.macos-body">
-            <Setter Property="FontFamily" Value="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif"/>
             <Setter Property="FontWeight" Value="Normal"/>
         </Style>
         
+        <!-- Button base styles -->
         <Style Selector="Button.macos-accent">
-            <Setter Property="FontFamily" Value="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif"/>
+            <Setter Property="FontFamily" Value="SF Pro Display,SF Pro Text,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif"/>
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Foreground" Value="White"/>
         </Style>
         
         <Style Selector="Button.macos-list-item">
-            <Setter Property="FontFamily" Value="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif"/>
+            <Setter Property="FontFamily" Value="SF Pro Display,SF Pro Text,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Padding" Value="12,6,12,6"/>
             <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        
+        <!-- Terminal styles (identical in both themes) -->
+        <Style Selector="ScrollViewer.macos-terminal">
+            <Setter Property="Background" Value="#000000"/>
         </Style>
         
         <Style Selector="TextBlock.macos-terminal">
+            <Setter Property="Background" Value="#000000"/>
+            <Setter Property="Foreground" Value="#00FF00"/>
             <Setter Property="FontFamily" Value="SF Mono,Monaco,Inconsolata,Consolas,monospace"/>
             <Setter Property="FontSize" Value="13"/>
+        </Style>
+        
+        <!-- macOS Window Controls -->
+        <Style Selector="Button.macos-window-control">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+        
+        <Style Selector="Button.macos-window-control:pointerover">
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+        
+        <Style Selector="Button.macos-window-control:pressed">
+            <Setter Property="Opacity" Value="0.6"/>
+        </Style>
+        <!-- Consolidated Dark Theme Styles (works well with AcrylicBlur) -->
+        <Style Selector="Border.macos-panel">
+            <Setter Property="Background" Value="#E62C2C2E"/>
+            <Setter Property="BorderBrush" Value="#B33A3A3C"/>
+            <Setter Property="BoxShadow" Value="0 1 3 0 #00000075"/>
+        </Style>
+        
+        <Style Selector="Border.macos-left-panel">
+            <Setter Property="Background" Value="#772C2C2E"/>
+            <Setter Property="BorderBrush" Value="#CC3A3A3C"/>
+            <Setter Property="BoxShadow" Value="0 1 3 0 #00000000"/>
+        </Style>
+        
+        <Style Selector="Border.macos-right-panel">
+            <Setter Property="Background" Value="#992C2C2E"/>
+            <Setter Property="BorderBrush" Value="#CC3A3A3C"/>
+            <Setter Property="BoxShadow" Value="0 1 3 0 #00000000"/>
+        </Style>
+        
+        <Style Selector="Border.macos-content">
+            <Setter Property="Background" Value="#0D1C1C1E"/>
+            <Setter Property="BorderBrush" Value="#403A3A3C"/>
+        </Style>
+        
+        <Style Selector="TextBlock.macos-title, TextBlock.macos-body">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        
+        <Style Selector="TextBlock.macos-secondary">
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+        </Style>
+        
+        <Style Selector="Button.macos-accent">
+            <Setter Property="Background" Value="#0A84FF"/>
+        </Style>
+        
+        <Style Selector="Button.macos-accent:pointerover">
+            <Setter Property="Background" Value="#409CFF"/>
+        </Style>
+        
+        <Style Selector="Button.macos-accent:pressed">
+            <Setter Property="Background" Value="#0969DA"/>
+        </Style>
+        
+        <Style Selector="Button.macos-list-item">
+            <Setter Property="Background" Value="#B31C1C1E"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#B33A3A3C"/>
+        </Style>
+        
+        <Style Selector="Button.macos-list-item:pointerover">
+            <Setter Property="Background" Value="#a788882e"/>
         </Style>
     </Application.Styles>
 </Application>

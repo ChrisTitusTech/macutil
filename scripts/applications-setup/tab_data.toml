@@ -29,11 +29,6 @@ description = "Thunderbird is a free, open-source email client that offers power
 script = "communication-apps/thunderbird-setup.sh"
 
 [[data.entries]]
-name = "Zoom"
-description = "Zoom is a widely-used video conferencing platform that allows users to host virtual meetings, webinars, and online collaboration with features like screen sharing and recording."
-script = "communication-apps/zoom-setup.sh"
-
-[[data.entries]]
 name = "WhatsApp"
 description = "WhatsApp is a popular messaging application that allows users to send text messages, voice messages, make voice and video calls, and share media files."
 script = "communication-apps/whatsapp-setup.sh"

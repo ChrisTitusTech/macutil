@@ -15,6 +15,19 @@ type MainWindow() as this =
 
     member private this.InitializeComponent() = AvaloniaXamlLoader.Load(this)
 
+    member private this.OnCloseButtonClick(sender: obj, e: RoutedEventArgs) =
+        this.Close()
+
+    member private this.OnMinimizeButtonClick(sender: obj, e: RoutedEventArgs) =
+        this.WindowState <- WindowState.Minimized
+
+    member private this.OnMaximizeButtonClick(sender: obj, e: RoutedEventArgs) =
+        this.WindowState <-
+            if this.WindowState = WindowState.FullScreen then
+                WindowState.Normal
+            else
+                WindowState.FullScreen
+
     member private this.OnScriptButtonClick(sender: obj, e: RoutedEventArgs) =
         match sender with
         | :? Button as button ->
