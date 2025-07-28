@@ -143,3 +143,8 @@ script = "kitty-setup.sh"
 name = "ZSH Prompt"
 description = "The Z shell is a Unix shell that can be used as an interactive login shell and as a command interpreter for shell scripting. Zsh is an extended Bourne shell with many improvements, including some features of Bash, ksh, and tcsh. This command installs ZSH prompt and provides basic configuration."
 script = "zsh-setup.sh"
+
+[[data]]
+name = "AltTab"
+description = "AltTab brings Windows-like Alt+Tab functionality to macOS, allowing you to switch between individual windows instead of just applications. Perfect for users who work with multiple windows of the same application."
+script = "alttab-setup.sh"
