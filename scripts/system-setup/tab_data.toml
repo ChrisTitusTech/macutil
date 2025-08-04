@@ -22,3 +22,8 @@ script = "fix-finder.sh"
 name = "Remove Animations"
 description = "This script is designed to remove snap packages and the snapd service from your system"
 script = "remove-animations.sh"
+
+[[data.entries]]
+name = "AltTab"
+description = "AltTab brings Windows-like Alt+Tab functionality to macOS, allowing you to switch between individual windows instead of just applications. Perfect for users who work with multiple windows of the same application."
+script = "alttab-setup.sh"
