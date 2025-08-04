@@ -265,6 +265,14 @@ set +m        # Disable job control
     let runScript (scriptInfo: ScriptInfo) (onOutput: string -> unit) (onError: string -> unit) : Task<int> =
         Task.Run(fun () ->
             try
+                // Detect OS platform to avoid non-UNIX systems
+                if Environment.OSVersion.Platform <> PlatformID.Unix then
+                    raise (System.Exception("Not running on UNIX!"))
+
+                // Now detect if it isn't running on macOS with osascript checks
+                if not (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(Runtime.InteropServices.OSPlatform.OSX)) then
+                    raise (System.Exception("Not running on macOS"))
+
                 // Get the script content from embedded resources
                 match getEmbeddedResource scriptInfo.FullPath with
                 | Some scriptContent ->
