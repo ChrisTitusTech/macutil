@@ -2,9 +2,9 @@
 
 Thank you for considering contributing to macutil! We appreciate your effort in helping improve this project. To ensure that your contributions align with the goals and quality standards of macutil, please follow these guidelines:
 
-## 1. **Install Rust**: 
+## 1. **Install .NET**: 
 
-Make sure you have Rust installed on your machine. You can install it by following the instructions at [rust-lang.org](https://www.rust-lang.org/tools/install).
+Make sure you have .NET installed on your machine. You can install it by following the instructions at [dotnet.microsoft.com](https://dotnet.microsoft.com/en-us/download).
 
 ## 2. **Fork and Clone the repo**
 
@@ -18,7 +18,7 @@ cd macutil
 ## 3. Make your changes
 
 - **Edit the files you want to change**: Make your changes to the relevant files.
-- **Test your changes**: Run `cargo run` to test your modifications in a local environment and ensure everything works as expected.
+- **Test your changes**: Run `dotnet run` to test your modifications in a local environment and ensure everything works as expected.
 
 ## 4. Understand the existing code
 
@@ -61,7 +61,6 @@ cd macutil
 ## 11. Documentation
 
 - **Update the documentation**: If your change affects the functionality, please update the relevant documentation files to reflect this.
-- **Automatic generation**: If you decide to add functionality through a new shell script, make sure to fill out all fields in `tab_data.toml` and run `cargo xtask docgen`.
 
 ## 12. License
 
