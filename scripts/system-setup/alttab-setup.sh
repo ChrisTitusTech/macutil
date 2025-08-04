@@ -1,12 +1,12 @@
 #!/bin/sh -e
 
+# shellcheck source=../common-script.sh
 . ../common-script.sh
 
 installAltTab() {
     if ! brewprogram_exists alt-tab; then
         printf "%b\n" "${YELLOW}Installing AltTab...${RC}"
-        brew install --cask alt-tab
-        if [ $? -ne 0 ]; then
+        if ! brew install --cask alt-tab; then
             printf "%b\n" "${RED}Failed to install AltTab. Please check your Homebrew installation or try again later.${RC}"
             exit 1
         fi
