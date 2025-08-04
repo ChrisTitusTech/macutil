@@ -3,6 +3,7 @@ namespace MacUtilGUI.Views
 open System.Windows.Input
 open Avalonia
 open Avalonia.Controls
+open Avalonia.Input
 open Avalonia.Markup.Xaml
 open Avalonia.Interactivity
 open MacUtilGUI.ViewModels
@@ -38,3 +39,6 @@ type MainWindow() as this =
                 | _ -> ()
             | _ -> ()
         | _ -> ()
+
+    member private this.TitleBar_PointerPressed(sender: obj, e: PointerPressedEventArgs) =
+        this.BeginMoveDrag(e)
