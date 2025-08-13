@@ -36,7 +36,8 @@ removeAnimations() {
     # Speed up Mission Control animations
     printf "%b\n" "${CYAN}Speeding up Mission Control animations...${RC}"
     $ESCALATION_TOOL defaults write com.apple.dock expose-animation-duration -float 0.1
-    
+    $ESCALATION_TOOL defaults write com.apple.dock expose-group-apps -bool true
+
     # Speed up Launchpad animations
     printf "%b\n" "${CYAN}Speeding up Launchpad animations...${RC}"
     $ESCALATION_TOOL defaults write com.apple.dock springboard-show-duration -float 0.1

@@ -13,7 +13,172 @@ module ScriptService =
 
     let assembly = Assembly.GetExecutingAssembly()
 
-    // Function to preprocess scripts for non-TTY environments
+    // Function to check if Terminal has Full Disk Access permission
+    let checkFullDiskAccess () : bool * string =
+        try
+            // Test multiple protected directories that require Full Disk Access
+            let testPaths = [
+                // System directories that require FDA
+                "/Library/Application Support"
+                "/Users/Shared/.com.apple.timemachine.supported"
+                "/System/Library/CoreServices/SystemUIServer.app/Contents"
+                // User's own protected directories
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Mail")
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Safari")
+            ]
+            
+            let mutable hasAccess = false
+            let mutable lastError = ""
+            
+            // Try each test path until we find one that works or all fail
+            for testPath in testPaths do
+                if not hasAccess && Directory.Exists(testPath) then
+                    try
+                        // Attempt to list contents - this will fail without Full Disk Access
+                        let startInfo = ProcessStartInfo()
+                        startInfo.FileName <- "/bin/ls"
+                        startInfo.Arguments <- sprintf "-la \"%s\"" testPath
+                        startInfo.UseShellExecute <- false
+                        startInfo.RedirectStandardOutput <- true
+                        startInfo.RedirectStandardError <- true
+                        startInfo.CreateNoWindow <- true
+                        
+                        let proc = Process.Start(startInfo)
+                        if proc <> null then
+                            proc.WaitForExit()
+                            let error = proc.StandardError.ReadToEnd()
+                            let output = proc.StandardOutput.ReadToEnd()
+                            
+                            // If we get permission denied, Full Disk Access is not granted
+                            if error.Contains("Operation not permitted") || error.Contains("Permission denied") then
+                                lastError <- sprintf "Access denied to %s" testPath
+                            elif not (String.IsNullOrEmpty(output)) then
+                                // Successfully read directory contents
+                                hasAccess <- true
+                            else
+                                lastError <- sprintf "No output from listing %s" testPath
+                    with ex ->
+                        lastError <- sprintf "Error testing %s: %s" testPath ex.Message
+            
+            if hasAccess then
+                true, "Terminal has Full Disk Access permission"
+            else
+                false, sprintf "Terminal does not have Full Disk Access permission. Last error: %s" lastError
+                
+        with ex ->
+            false, sprintf "Error checking Full Disk Access: %s" ex.Message
+
+    // Function to guide user through granting Full Disk Access
+    let promptForFullDiskAccess (onOutput: string -> unit) : unit =
+        onOutput "⚠️  IMPORTANT: Terminal needs Full Disk Access permission"
+        onOutput ""
+        onOutput "To grant Full Disk Access to Terminal:"
+        onOutput "1. Open System Preferences/Settings"
+        onOutput "2. Go to Security & Privacy (or Privacy & Security)"
+        onOutput "3. Click on 'Full Disk Access' in the sidebar"
+        onOutput "4. Click the lock icon and enter your password"
+        onOutput "5. Click the '+' button to add an application"
+        onOutput "6. Navigate to /Applications/Utilities/Terminal.app"
+        onOutput "7. Select Terminal and click 'Open'"
+        onOutput "8. Make sure the checkbox next to Terminal is checked"
+        onOutput ""
+        onOutput "📱 Alternative: You can also:"
+        onOutput "   • Open Spotlight (Cmd+Space)"
+        onOutput "   • Type 'Privacy & Security' and press Enter"
+        onOutput "   • Look for 'Full Disk Access' on the left"
+        onOutput ""
+        onOutput "After granting permission, restart MacUtil and try again."
+        onOutput ""
+        onOutput "🔍 Why is this needed?"
+        onOutput "Many system configuration scripts need to access protected"
+        onOutput "system files and directories that require Full Disk Access."
+
+    // Function to open System Preferences to the correct pane
+    let openPrivacySettings () : unit =
+        let rec tryOpenSettings attempts =
+            match attempts with
+            | 1 ->
+                // Try to open directly to Privacy & Security Full Disk Access (macOS 13+)
+                try
+                    let startInfo = ProcessStartInfo()
+                    startInfo.FileName <- "/usr/bin/open"
+                    startInfo.Arguments <- "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
+                    startInfo.UseShellExecute <- false
+                    startInfo.CreateNoWindow <- true
+                    
+                    let proc = Process.Start(startInfo)
+                    if proc <> null then
+                        proc.WaitForExit()
+                        // If exit code is 0, the URL scheme worked
+                        proc.ExitCode = 0
+                    else
+                        false
+                with _ ->
+                    false
+            | 2 ->
+                // Fallback 1: Try macOS 12 and earlier URL scheme
+                try
+                    let startInfo = ProcessStartInfo()
+                    startInfo.FileName <- "/usr/bin/open"
+                    startInfo.Arguments <- "x-apple.systempreferences:com.apple.preference.security?Privacy"
+                    startInfo.UseShellExecute <- false
+                    startInfo.CreateNoWindow <- true
+                    
+                    let proc = Process.Start(startInfo)
+                    if proc <> null then
+                        proc.WaitForExit()
+                        proc.ExitCode = 0
+                    else
+                        false
+                with _ ->
+                    false
+            | 3 ->
+                // Fallback 2: Open System Preferences/Settings app directly
+                try
+                    let startInfo = ProcessStartInfo()
+                    startInfo.FileName <- "/usr/bin/open"
+                    // Try System Settings first (macOS 13+), then System Preferences
+                    startInfo.Arguments <- "/System/Applications/System Settings.app"
+                    startInfo.UseShellExecute <- false
+                    startInfo.CreateNoWindow <- true
+                    
+                    let proc = Process.Start(startInfo)
+                    if proc <> null then
+                        proc.WaitForExit()
+                        proc.ExitCode = 0
+                    else
+                        false
+                with _ ->
+                    false
+            | 4 ->
+                // Final fallback: Open legacy System Preferences (macOS 12 and earlier)
+                try
+                    let startInfo = ProcessStartInfo()
+                    startInfo.FileName <- "/usr/bin/open"
+                    startInfo.Arguments <- "/System/Applications/System Preferences.app"
+                    startInfo.UseShellExecute <- false
+                    startInfo.CreateNoWindow <- true
+                    
+                    let proc = Process.Start(startInfo)
+                    if proc <> null then
+                        proc.WaitForExit()
+                        true // Last attempt, consider it successful regardless
+                    else
+                        false
+                with _ ->
+                    false
+            | _ ->
+                false
+        
+        // Try each method until one succeeds
+        let mutable currentAttempt = 1
+        let mutable success = false
+        while currentAttempt <= 4 && not success do
+            success <- tryOpenSettings currentAttempt
+            if not success then
+                currentAttempt <- currentAttempt + 1
+
+    // Modified function to preprocess scripts for non-TTY environments
     let preprocessScriptForNonTTY (scriptContent: string) : string =
         let lines = scriptContent.Split([| '\n'; '\r' |], StringSplitOptions.None)
         let processedLines = 
@@ -261,10 +426,27 @@ set +m        # Disable job control
 
         allCategories
 
-    // Main script execution function with real-time output streaming
+    // Main script execution function with Full Disk Access check
     let runScript (scriptInfo: ScriptInfo) (onOutput: string -> unit) (onError: string -> unit) : Task<int> =
         Task.Run(fun () ->
             try
+                // First, check if Terminal has Full Disk Access
+                let hasAccess, accessMessage = checkFullDiskAccess()
+                
+                if not hasAccess then
+                    onError "❌ Full Disk Access Required"
+                    onError ""
+                    promptForFullDiskAccess onOutput
+                    onError ""
+                    onError "Click the button below to open Privacy Settings:"
+                    
+                    // Open Privacy Settings automatically
+                    openPrivacySettings()
+                    
+                    -2  // Special exit code for permission issue
+                else
+                onOutput ""
+
                 // Get the script content from embedded resources
                 match getEmbeddedResource scriptInfo.FullPath with
                 | Some scriptContent ->
@@ -542,169 +724,187 @@ set +m        # Disable job control
                 onError errorMsg
                 -1)
 
-    // Alternative version that returns an IObservable for reactive programming
+    // Helper function to handle Full Disk Access check and notification
+    let private handleFullDiskAccessCheck (observer: IObserver<Choice<string, string, int>>) : bool =
+        let hasAccess, accessMessage = checkFullDiskAccess()
+        
+        if not hasAccess then
+            observer.OnNext(Choice2Of3 "❌ Full Disk Access Required")
+            observer.OnNext(Choice2Of3 "")
+            promptForFullDiskAccess (fun msg -> observer.OnNext(Choice2Of3 msg))
+            observer.OnNext(Choice2Of3 "")
+            observer.OnNext(Choice2Of3 "Click the button below to open Privacy Settings:")
+            
+            // Open Privacy Settings automatically
+            openPrivacySettings()
+            
+            observer.OnNext(Choice3Of3 -2)  // Special exit code for permission issue
+            observer.OnCompleted()
+            false
+        else
+            observer.OnNext(Choice1Of3 "✅ Terminal has Full Disk Access - proceeding with script execution")
+            observer.OnNext(Choice1Of3 "")
+            true
+
+    // Helper function to resolve script content with common script handling
+    let private resolveScriptContent (scriptInfo: ScriptInfo) (observer: IObserver<Choice<string, string, int>>) : string option =
+        match getEmbeddedResource scriptInfo.FullPath with
+        | Some scriptContent ->
+            // Check if script sources common-script.sh
+            let needsCommonScript =
+                scriptContent.Contains(". ../common-script.sh")
+                || scriptContent.Contains(". ../../common-script.sh")
+
+            if needsCommonScript then
+                observer.OnNext(Choice1Of3 "DEBUG: Script needs common-script.sh, checking embedded resources...")
+
+                // Get common script content
+                match getEmbeddedResource "common-script.sh" with
+                | Some commonContent ->
+                    observer.OnNext(Choice1Of3 "DEBUG: Successfully found common-script.sh in embedded resources")
+                    
+                    // Remove sourcing line and combine scripts
+                    let cleanedScript =
+                        scriptContent
+                            .Replace(". ../common-script.sh", "")
+                            .Replace(". ../../common-script.sh", "")
+                            .Trim()
+
+                    // Combine: shebang + common functions + original script (without sourcing)
+                    let shebang = "#!/bin/sh -e\n\n"
+                    let commonFunctions =
+                        commonContent
+                            .Replace("#!/bin/sh -e", "")
+                            .Replace("# shellcheck disable=SC2034", "")
+                            .Trim()
+
+                    let combinedScript = 
+                        shebang + "# Embedded common script functions\n" + 
+                        commonFunctions + "\n\n# Original script content\n" + 
+                        cleanedScript
+                    
+                    Some combinedScript
+                | None ->
+                    observer.OnNext(Choice2Of3 "Warning: common-script.sh not found in embedded resources, using original script")
+                    Some scriptContent
+            else
+                Some scriptContent
+        | None ->
+            let errorMsg = sprintf "Script content not found in embedded resources: %s" scriptInfo.FullPath
+            observer.OnNext(Choice2Of3 errorMsg)
+            observer.OnCompleted()
+            None
+
+    // Helper function to setup environment variables for non-TTY execution
+    let private setupEnvironmentVariables (startInfo: ProcessStartInfo) : unit =
+        startInfo.EnvironmentVariables.["TERM"] <- "xterm-256color"
+        startInfo.EnvironmentVariables.["DEBIAN_FRONTEND"] <- "noninteractive"
+        startInfo.EnvironmentVariables.["CI"] <- "true"
+        startInfo.EnvironmentVariables.["HOMEBREW_NO_ENV_HINTS"] <- "1"
+        startInfo.EnvironmentVariables.["HOMEBREW_NO_INSTALL_CLEANUP"] <- "1"
+        startInfo.EnvironmentVariables.["HOMEBREW_NO_AUTO_UPDATE"] <- "1"
+        startInfo.EnvironmentVariables.["HOMEBREW_NO_ANALYTICS"] <- "1"
+        startInfo.EnvironmentVariables.["HOMEBREW_NO_INSECURE_REDIRECT"] <- "1"
+        startInfo.EnvironmentVariables.["NONINTERACTIVE"] <- "1"
+        startInfo.EnvironmentVariables.["FORCE_NONINTERACTIVE"] <- "1"
+
+    // Helper function to execute script and handle output
+    let private executeScript (tempFilePath: string) (scriptInfo: ScriptInfo) (observer: IObserver<Choice<string, string, int>>) : unit =
+        // Make the temporary file executable
+        let chmodStartInfo = ProcessStartInfo()
+        chmodStartInfo.FileName <- "/bin/chmod"
+        chmodStartInfo.Arguments <- sprintf "+x \"%s\"" tempFilePath
+        chmodStartInfo.UseShellExecute <- false
+        chmodStartInfo.CreateNoWindow <- true
+
+        let chmodProc = Process.Start(chmodStartInfo)
+        if chmodProc <> null then
+            chmodProc.WaitForExit()
+
+        // Execute the script with real-time output
+        let startInfo = ProcessStartInfo()
+        startInfo.FileName <- "/bin/bash"
+        startInfo.Arguments <- sprintf "\"%s\"" tempFilePath
+        startInfo.UseShellExecute <- false
+        startInfo.CreateNoWindow <- true
+        startInfo.RedirectStandardOutput <- true
+        startInfo.RedirectStandardError <- true
+        
+        // Set comprehensive environment variables to handle non-TTY execution
+        setupEnvironmentVariables startInfo
+
+        let proc = Process.Start(startInfo)
+
+        match proc with
+        | null ->
+            let errorMsg = sprintf "Failed to start script: %s" scriptInfo.Name
+            observer.OnNext(Choice2Of3 errorMsg)
+            observer.OnCompleted()
+        | _ ->
+            // Handle output data received events
+            proc.OutputDataReceived.Add(fun args ->
+                if not (String.IsNullOrEmpty(args.Data)) then
+                    observer.OnNext(Choice1Of3 args.Data))
+
+            proc.ErrorDataReceived.Add(fun args ->
+                if not (String.IsNullOrEmpty(args.Data)) then
+                    observer.OnNext(Choice2Of3 args.Data))
+
+            // Start async reading
+            proc.BeginOutputReadLine()
+            proc.BeginErrorReadLine()
+
+            // Wait for the process to complete
+            proc.WaitForExit()
+
+            observer.OnNext(Choice3Of3 proc.ExitCode)
+            observer.OnCompleted()
+
+    // Helper function to clean up temporary files
+    let private cleanupTempFile (tempFilePath: string) : unit =
+        if File.Exists(tempFilePath) then
+            try
+                File.Delete(tempFilePath)
+            with _ ->
+                () // Ignore cleanup errors
+
+    // Alternative version that returns an IObservable for reactive programming - simplified
     let runScriptObservable (scriptInfo: ScriptInfo) : IObservable<Choice<string, string, int>> =
         { new IObservable<Choice<string, string, int>> with
             member __.Subscribe(observer) =
                 let task =
                     Task.Run(fun () ->
                         try
-                            // Get the script content from embedded resources
-                            match getEmbeddedResource scriptInfo.FullPath with
-                            | Some scriptContent ->
-                                // Check if script sources common-script.sh
-                                let needsCommonScript =
-                                    scriptContent.Contains(". ../common-script.sh")
-                                    || scriptContent.Contains(". ../../common-script.sh")
+                            // Step 1: Check Full Disk Access (early return if failed)
+                            if not (handleFullDiskAccessCheck observer) then
+                                () // Already handled in the helper function
+                            else
+                                // Step 2: Resolve script content (early return if failed)
+                                match resolveScriptContent scriptInfo observer with
+                                | None -> () // Already handled in the helper function
+                                | Some finalScriptContent ->
+                                    // Step 3: Preprocess the script for non-TTY execution
+                                    let preprocessedScript = preprocessScriptForNonTTY finalScriptContent
 
-                                let finalScriptContent =
-                                    if needsCommonScript then
-                                        observer.OnNext(
-                                            Choice1Of3
-                                                "DEBUG: Script needs common-script.sh, checking embedded resources..."
-                                        )
+                                    // Step 4: Create temporary file and execute
+                                    let tempDir = Path.GetTempPath()
+                                    let scriptFileName = Path.GetFileName(scriptInfo.Script)
+                                    let tempFileName = sprintf "%s_%s" (Guid.NewGuid().ToString("N").Substring(0, 8)) scriptFileName
+                                    let tempFilePath = Path.Combine(tempDir, tempFileName)
 
-                                        // Get common script content
-                                        match getEmbeddedResource "common-script.sh" with
-                                        | Some commonContent ->
-                                            observer.OnNext(
-                                                Choice1Of3
-                                                    "DEBUG: Successfully found common-script.sh in embedded resources"
-                                            )
-                                            // Remove sourcing line and combine scripts
-                                            let cleanedScript =
-                                                scriptContent
-                                                    .Replace(". ../common-script.sh", "")
-                                                    .Replace(". ../../common-script.sh", "")
-                                                    .Trim()
-
-                                            // Combine: shebang + common functions + original script (without sourcing)
-                                            let shebang = "#!/bin/sh -e\n\n"
-
-                                            let commonFunctions =
-                                                commonContent
-                                                    .Replace("#!/bin/sh -e", "")
-                                                    .Replace("# shellcheck disable=SC2034", "")
-                                                    .Trim()
-
-                                            sprintf
-                                                "%s# Embedded common script functions\n%s\n\n# Original script content\n%s"
-                                                shebang
-                                                commonFunctions
-                                                cleanedScript
-                                        | None ->
-                                            observer.OnNext(
-                                                Choice2Of3
-                                                    "Warning: common-script.sh not found in embedded resources, using original script"
-                                            )
-
-                                            scriptContent
-                                    else
-                                        scriptContent
-                                
-                                // Preprocess the script for non-TTY execution
-                                let preprocessedScript = preprocessScriptForNonTTY finalScriptContent
-
-                                // Create a temporary file to execute the script
-                                let tempDir = Path.GetTempPath()
-                                let scriptFileName = Path.GetFileName(scriptInfo.Script)
-
-                                let tempFileName =
-                                    sprintf "%s_%s" (Guid.NewGuid().ToString("N").Substring(0, 8)) scriptFileName
-
-                                let tempFilePath = Path.Combine(tempDir, tempFileName)
-
-                                try
-                                    // Write script content to temporary file
-                                    File.WriteAllText(tempFilePath, preprocessedScript)
-
-                                    // Make the temporary file executable
-                                    let chmodStartInfo = ProcessStartInfo()
-                                    chmodStartInfo.FileName <- "/bin/chmod"
-                                    chmodStartInfo.Arguments <- sprintf "+x \"%s\"" tempFilePath
-                                    chmodStartInfo.UseShellExecute <- false
-                                    chmodStartInfo.CreateNoWindow <- true
-
-                                    let chmodProc = Process.Start(chmodStartInfo)
-
-                                    if chmodProc <> null then
-                                        chmodProc.WaitForExit()
-
-                                    // Execute the script with real-time output
-                                    let startInfo = ProcessStartInfo()
-                                    startInfo.FileName <- "/bin/bash"
-                                    startInfo.Arguments <- sprintf "\"%s\"" tempFilePath
-                                    startInfo.UseShellExecute <- false
-                                    startInfo.CreateNoWindow <- true
-                                    startInfo.RedirectStandardOutput <- true
-                                    startInfo.RedirectStandardError <- true
-                                    
-                                    // Set comprehensive environment variables to handle non-TTY execution
-                                    startInfo.EnvironmentVariables.["TERM"] <- "xterm-256color"
-                                    startInfo.EnvironmentVariables.["DEBIAN_FRONTEND"] <- "noninteractive"
-                                    startInfo.EnvironmentVariables.["CI"] <- "true"
-                                    startInfo.EnvironmentVariables.["HOMEBREW_NO_ENV_HINTS"] <- "1"
-                                    startInfo.EnvironmentVariables.["HOMEBREW_NO_INSTALL_CLEANUP"] <- "1"
-                                    startInfo.EnvironmentVariables.["HOMEBREW_NO_AUTO_UPDATE"] <- "1"
-                                    startInfo.EnvironmentVariables.["HOMEBREW_NO_ANALYTICS"] <- "1"
-                                    startInfo.EnvironmentVariables.["HOMEBREW_NO_INSECURE_REDIRECT"] <- "1"
-                                    startInfo.EnvironmentVariables.["NONINTERACTIVE"] <- "1"
-                                    
-                                    // Force scripts to run in non-interactive mode
-                                    startInfo.EnvironmentVariables.["FORCE_NONINTERACTIVE"] <- "1"
-
-                                    let proc = Process.Start(startInfo)
-
-                                    if proc <> null then
-                                        // Handle output data received events
-                                        proc.OutputDataReceived.Add(fun args ->
-                                            if not (String.IsNullOrEmpty(args.Data)) then
-                                                observer.OnNext(Choice1Of3 args.Data))
-
-                                        proc.ErrorDataReceived.Add(fun args ->
-                                            if not (String.IsNullOrEmpty(args.Data)) then
-                                                observer.OnNext(Choice2Of3 args.Data))
-
-                                        // Start async reading
-                                        proc.BeginOutputReadLine()
-                                        proc.BeginErrorReadLine()
-
-                                        // Wait for the process to complete
-                                        proc.WaitForExit()
-
-                                        observer.OnNext(Choice3Of3 proc.ExitCode)
-                                        observer.OnCompleted()
-                                    else
-                                        observer.OnNext(
-                                            Choice2Of3(sprintf "Failed to start script: %s" scriptInfo.Name)
-                                        )
-
-                                        observer.OnCompleted()
-                                finally
-                                    // Clean up temporary file
-                                    if File.Exists(tempFilePath) then
-                                        try
-                                            File.Delete(tempFilePath)
-                                        with _ ->
-                                            () // Ignore cleanup errors
-                            | None ->
-                                observer.OnNext(
-                                    Choice2Of3(
-                                        sprintf
-                                            "Script content not found in embedded resources: %s"
-                                            scriptInfo.FullPath
-                                    )
-                                )
-
-                                observer.OnCompleted()
+                                    try
+                                        // Write script content to temporary file
+                                        File.WriteAllText(tempFilePath, preprocessedScript)
+                                        
+                                        // Execute the script
+                                        executeScript tempFilePath scriptInfo observer
+                                    finally
+                                        // Clean up temporary file
+                                        cleanupTempFile tempFilePath
                         with ex ->
-                            observer.OnNext(
-                                Choice2Of3(sprintf "Error running script %s: %s" scriptInfo.Name ex.Message)
-                            )
-
+                            let errorMsg = sprintf "Error running script %s: %s" scriptInfo.Name ex.Message
+                            observer.OnNext(Choice2Of3 errorMsg)
                             observer.OnCompleted())
 
                 { new IDisposable with
-                    member __.Dispose() =
-                        // Could cancel the task here if needed
-                        () } }
+                    member __.Dispose() = () } }
