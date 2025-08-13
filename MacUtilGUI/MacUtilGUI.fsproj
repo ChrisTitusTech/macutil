@@ -27,8 +27,8 @@
     <CFBundleName>MacUtil</CFBundleName>
     <CFBundleDisplayName>MacUtil GUI</CFBundleDisplayName>
     <CFBundleIdentifier>com.macutil.gui</CFBundleIdentifier>
-    <CFBundleVersion>0.2.0</CFBundleVersion>
-    <CFBundleShortVersionString>0.2.0</CFBundleShortVersionString>
+    <CFBundleVersion>0.2.1</CFBundleVersion>
+    <CFBundleShortVersionString>0.2.1</CFBundleShortVersionString>
     <CFBundlePackageType>APPL</CFBundlePackageType>
     <CFBundleSignature>????</CFBundleSignature>
     <CFBundleExecutable>MacUtilGUI</CFBundleExecutable>

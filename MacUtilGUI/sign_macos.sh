@@ -91,20 +91,9 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Sign all files in the MacOS directory
-print_status "Signing all binaries in the app bundle..."
-find "$APP_BUNDLE_PATH/Contents/MacOS/" -type f | while read fname; do
-    print_status "Signing: $fname"
-    codesign --force --timestamp --options=runtime --entitlements "$ENTITLEMENTS_FILE" --sign "$DEVELOPER_ID" "$fname"
-    if [ $? -ne 0 ]; then
-        print_error "Failed to sign: $fname"
-        exit 1
-    fi
-done
-
-# Sign the app bundle itself
-print_status "Signing the app bundle..."
-codesign --force --timestamp --options=runtime --entitlements "$ENTITLEMENTS_FILE" --sign "$DEVELOPER_ID" "$APP_BUNDLE_PATH"
+# Sign the app bundle with deep signing (signs all nested components)
+print_status "Signing the app bundle and all nested components..."
+codesign --force --deep --timestamp --options=runtime --entitlements "$ENTITLEMENTS_FILE" --sign "$DEVELOPER_ID" "$APP_BUNDLE_PATH"
 
 if [ $? -eq 0 ]; then
     print_success "App bundle signed successfully!"

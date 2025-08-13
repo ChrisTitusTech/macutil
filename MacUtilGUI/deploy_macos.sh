@@ -10,7 +10,7 @@ echo
 APP_NAME="MacUtilGUI"
 BUNDLE_NAME="MacUtil"
 BUNDLE_IDENTIFIER="com.macutil.gui"
-VERSION="1.0.0"
+VERSION="0.2.1"
 COPYRIGHT="Copyright © 2025 MacUtil. All rights reserved."
 
 # Colors for output
@@ -97,7 +97,7 @@ create_app_bundle() {
     <key>CFBundleVersion</key>
     <string>$VERSION</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>$VERSION</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.15</string>
     <key>CFBundleExecutable</key>
@@ -208,7 +208,7 @@ cat > "$universal_app/Contents/Info.plist" << EOF
     <key>CFBundleVersion</key>
     <string>$VERSION</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>$VERSION</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.15</string>
     <key>CFBundleExecutable</key>
