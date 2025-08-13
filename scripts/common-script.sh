@@ -16,10 +16,14 @@ return 0
 }
 
 brewprogram_exists() {
-for cmd in "$@"; do
-    brew list "$cmd" >/dev/null 2>&1 || return 1
-done
-return 0
+    for cmd in "$@"; do
+        # Check if command exists in PATH or Homebrew locations
+        command -v "$cmd" >/dev/null 2>&1 || \
+        [ -d "/opt/homebrew/Cellar/$cmd" ] || [ -d "/usr/local/Cellar/$cmd" ] || \
+        [ -d "/opt/homebrew/Caskroom/$cmd" ] || [ -d "/usr/local/Caskroom/$cmd" ] || \
+        [ -d "/Applications/$cmd.app" ] || return 1
+    done
+    return 0
 }
 
 setup_askpass() {
