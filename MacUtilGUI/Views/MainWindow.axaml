@@ -23,7 +23,7 @@
     <Border Background="#80000000" Padding="20" Classes="macos-window" CornerRadius="15">
     <Grid RowDefinitions="Auto,*">
         <!-- macOS Title Bar -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Height="32" Margin="-20,-20,-20,0" Background="#80000000">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Height="32" Margin="-20,-20,-20,0" Background="#80000000" PointerPressed="TitleBar_PointerPressed">
             <!-- Window Controls -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,6,0,0" Spacing="8">
                 <Button Width="12" Height="12" CornerRadius="6" Background="#FF5F57" Classes="macos-window-control" Cursor="Hand" Click="OnCloseButtonClick"/>
