@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/github/v/release/ChrisTitusTech/macutil?color=%230567ff&label=Latest%20Release&style=for-the-badge)](https://github.com/ChrisTitusTech/macutil/releases/latest)
 ![GitHub Downloads (specific asset, all releases)](https://img.shields.io/github/downloads/ChrisTitusTech/macutil/macutil?label=Total%20Downloads&style=for-the-badge)
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/RUbZUZyByQ?theme=default-inverted&style=for-the-badge)](https://discord.gg/RUbZUZyByQ)
 
 
 > [!NOTE]
