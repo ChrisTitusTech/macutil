@@ -9,56 +9,37 @@ body:
       value: |
         Thank you for helping us improve! Please provide as much detail as possible to ensure we can address the issue effectively.
   - type: dropdown
-    id: distribution
+    id: macos-version
     attributes:
-      label: Distribution
+      label: macOS Version
       multiple: false
-      description: Select the Linux distribution you are using.
       options:
-        - Arch
-        - Ubuntu
-        - Fedora
-        - Debian
-        - openSUSE
+        - Tahoe (26.x)
+        - Sequoia (15.x)
+        - Sonoma (14.x)
+        - Ventura (13.x)
+        - Monterey (12.x)
+        - Big Sur (11.x)
+        - Catalina (10.15)
+        - Mojave (10.14)
         - Other
     validations:
       required: true
   - type: input
-    id: specify-distribution
+    id: macos-version-specific
     attributes:
-      label: Specify Distribution (if "Other" selected)
-      description: Enter the name of your Linux distribution.
-      placeholder: e.g., Manjaro, Pop!_OS
-  - type: dropdown
-    id: de-wm
-    attributes:
-      label: Desktop Environment / Window Manager
-      multiple: false
-      description: Select your desktop environment or window manager.
-      options:
-        - GNOME
-        - KDE Plasma
-        - XFCE
-        - Hyprland
-        - i3
-        - Other
+      label: Specific macOS Version
+      description: Enter your exact macOS version (e.g., 15.1.1, 14.2.1).
     validations:
       required: true
-  - type: input
-    id: specify-de-wm
-    attributes:
-      label: Specify Desktop Environment/Window Manager (if "Other" selected)
-      description: Enter the name of your desktop environment or window manager.
-      placeholder: e.g., LXQt, Openbox
   - type: dropdown
-    id: windowing-system
+    id: mac-architecture
     attributes:
-      label: Windowing System
+      label: Mac Processor Type
       multiple: false
-      description: Specify whether you are using X11 or Wayland.
       options:
-        - X11
-        - Wayland
+        - Apple Silicon / ARM
+        - Intel / x86
     validations:
       required: true
   - type: input
@@ -88,48 +69,50 @@ body:
       description: Enter the branch name.
       placeholder: e.g., feature/new-feature
   - type: textarea
-    id: describe-bug
+    id: description
     attributes:
-      label: Describe the bug
+      label: Description
       description: |
-        Provide a clear and concise description of what the bug is.
+        Provide a clear and concise description of the bug or issue.
       placeholder: Describe the issue in detail.
     validations:
       required: true
   - type: textarea
-    id: reproduce-steps
+    id: reproduction-steps
     attributes:
-      label: Steps to reproduce
-      description: Steps to reproduce the behavior.
+      label: Reproduction Steps
+      description: Detailed steps that reproduce the bug.
       placeholder: |
-        1. Go to '...'
-        2. Click on '...'
-        3. Scroll down to '...'
-        4. See error
+        1. I ran the '...' script
+        2. It ran successfully and did these '...' things
+        3. But then... (go to next field)
     validations:
       required: true
   - type: textarea
-    id: expected-behavior
+    id: actual-result
     attributes:
-      label: Expected behavior
+      label: Actual Result
+      description: |
+        What actually happened when you followed the reproduction steps.
+      placeholder: Describe what actually occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-result
+    attributes:
+      label: Expected Result
       description: |
         A clear and concise description of what you expected to happen.
       placeholder: Explain the expected outcome.
     validations:
       required: true
   - type: textarea
-    id: additional-context
+    id: supporting-information
     attributes:
-      label: Additional context
+      label: Supporting Information
       description: |
-        Add any other context or information about the problem here.
-      placeholder: Include any related logs, error messages, or configurations.
-  - type: textarea
-    id: screenshots
-    attributes:
-      label: Screenshots
-      description: |
-        If applicable, add screenshots to help explain your problem. Provide links or attach images in the comments after submitting the issue.
+        Add any other context, logs, error messages, screenshots, or configurations that might help diagnose the issue.
+      placeholder: Include any related logs, error messages, screenshots, or configurations.
   - type: checkboxes
     id: checklist
     attributes:
