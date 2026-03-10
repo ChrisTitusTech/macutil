@@ -140,6 +140,14 @@ description = "kitty is a free and open-source GPU-accelerated terminal emulator
 script = "kitty-setup.sh"
 
 [[data]]
+name = "Utilities"
+
+[[data.entries]]
+name = "AppCleaner"
+description = "AppCleaner is a small application which allows you to thoroughly uninstall unwanted apps."
+script = "utilities/appcleaner-setup.sh"
+
+[[data]]
 name = "ZSH Prompt"
 description = "The Z shell is a Unix shell that can be used as an interactive login shell and as a command interpreter for shell scripting. Zsh is an extended Bourne shell with many improvements, including some features of Bash, ksh, and tcsh. This command installs ZSH prompt and provides basic configuration."
 script = "zsh-setup.sh"
