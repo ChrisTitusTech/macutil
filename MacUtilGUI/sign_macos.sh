@@ -91,6 +91,22 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
+# Sign native libraries first (required for .NET single-file apps)
+# .NET self-contained bundles extract native dylibs to a temp directory at runtime.
+# These dylibs must be individually signed before the bundle, otherwise macOS
+# hardened runtime rejects them with "different Team IDs" even when
+# disable-library-validation is set.
+print_status "Signing native libraries inside the bundle..."
+NATIVE_LIBS=$(find "$APP_BUNDLE_PATH/Contents/MacOS" -name "*.dylib" -type f 2>/dev/null)
+for dylib in $NATIVE_LIBS; do
+    codesign --force --sign "$DEVELOPER_ID" "$dylib" 2>/dev/null
+    if [ $? -eq 0 ]; then
+        print_success "Signed: $(basename "$dylib")"
+    else
+        print_warning "Could not sign: $(basename "$dylib") (may not exist in single-file bundles)"
+    fi
+done
+
 # Sign the app bundle with deep signing (signs all nested components)
 print_status "Signing the app bundle and all nested components..."
 codesign --force --deep --timestamp --options=runtime --entitlements "$ENTITLEMENTS_FILE" --sign "$DEVELOPER_ID" "$APP_BUNDLE_PATH"
