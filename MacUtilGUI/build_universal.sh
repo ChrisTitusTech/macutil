@@ -77,8 +77,42 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Copy dependencies
-rsync -a --exclude="$APP_NAME" "./bin/Release/net9.0/publish/osx-x64/" "$universal_app/Contents/MacOS/" 2>/dev/null
+# Copy non-binary dependencies from x64 build
+print_status "Copying dependencies..."
+rsync -a --exclude="$APP_NAME" --exclude="*.dylib" "./bin/Release/net9.0/publish/osx-x64/" "$universal_app/Contents/MacOS/" 2>/dev/null
+
+# Merge native dylibs with lipo (so they work on both architectures)
+print_status "Creating universal native libraries..."
+x64_dir="./bin/Release/net9.0/publish/osx-x64"
+arm64_dir="./bin/Release/net9.0/publish/osx-arm64"
+merged_count=0
+skipped_count=0
+
+for dylib in "$x64_dir"/*.dylib; do
+    [ -e "$dylib" ] || continue
+    dylib_name=$(basename "$dylib")
+    if [ -f "$arm64_dir/$dylib_name" ]; then
+        # Both architectures exist — merge into universal
+        lipo -create "$x64_dir/$dylib_name" "$arm64_dir/$dylib_name" \
+            -output "$universal_app/Contents/MacOS/$dylib_name" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            print_success "Merged: $dylib_name"
+            merged_count=$((merged_count + 1))
+        else
+            # lipo failed — copy x64 version as fallback
+            cp "$dylib" "$universal_app/Contents/MacOS/$dylib_name"
+            print_warning "Could not merge $dylib_name (copied x64 version)"
+            skipped_count=$((skipped_count + 1))
+        fi
+    else
+        # Only exists in x64 build — copy as-is
+        cp "$dylib" "$universal_app/Contents/MacOS/$dylib_name"
+        print_status "Copied x64-only: $dylib_name"
+        skipped_count=$((skipped_count + 1))
+    fi
+done
+
+print_status "Merged $merged_count universal libraries, copied $skipped_count single-arch"
 
 # Create Info.plist
 cat > "$universal_app/Contents/Info.plist" << EOF
@@ -129,6 +163,23 @@ fi
 
 # Make executable
 chmod +x "$universal_app/Contents/MacOS/$APP_NAME"
+
+# Ad-hoc sign native dylibs (prevents hardened runtime rejection)
+# This is a minimal sign for unsigned builds. For distribution, use sign_macos.sh
+print_status "Ad-hoc signing native libraries..."
+for dylib in "$universal_app/Contents/MacOS/"*.dylib; do
+    [ -e "$dylib" ] || continue
+    codesign --force --sign - "$dylib" 2>/dev/null && print_success "Signed: $(basename "$dylib")"
+done
+
+# Ad-hoc sign the bundle itself (no hardened runtime for dev builds)
+print_status "Ad-hoc signing the app bundle..."
+codesign --force --deep --sign - --options=0x0 "$universal_app" 2>/dev/null
+if [ $? -eq 0 ]; then
+    print_success "Ad-hoc signing complete (no hardened runtime)"
+else
+    print_warning "Ad-hoc signing failed — run sign_macos.sh for proper signing"
+fi
 
 # Show results
 universal_size=$(du -sh "$universal_app" | cut -f1)
