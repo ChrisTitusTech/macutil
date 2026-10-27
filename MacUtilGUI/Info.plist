@@ -32,6 +32,8 @@
     <string>public.app-category.utilities</string>
     <key>NSRequiresAquaSystemAppearance</key>
     <false/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>MacUtil runs setup scripts with administrator privileges through AppleScript.</string>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2025 MacUtil. All rights reserved.</string>
 </dict>

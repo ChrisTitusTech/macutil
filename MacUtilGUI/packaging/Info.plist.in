@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>MacUtil</string>
+    <key>CFBundleDisplayName</key>
+    <string>MacUtil GUI</string>
+    <key>CFBundleIdentifier</key>
+    <string>__BUNDLE_ID__</string>
+    <key>CFBundleExecutable</key>
+    <string>__EXECUTABLE__</string>
+    <key>CFBundleIconFile</key>
+    <string>__ICON__</string>
+    <key>CFBundleVersion</key>
+    <string>__VERSION__</string>
+    <key>CFBundleShortVersionString</key>
+    <string>__VERSION__</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>__MIN_MACOS__</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSRequiresAquaSystemAppearance</key>
+    <false/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>MacUtil runs setup scripts with administrator privileges through AppleScript.</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>__COPYRIGHT__</string>
+</dict>
+</plist>
