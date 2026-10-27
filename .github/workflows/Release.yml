@@ -2,14 +2,17 @@ name: macutil Release
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
-  macutil_build:
-    runs-on: ubuntu-latest
+  build_app:
+    # macOS runner: lipo, codesign and ditto are required to build a .app bundle.
+    runs-on: macos-14
 
     steps:
       - uses: actions/checkout@v5
@@ -17,7 +20,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: "9.0.x"
 
       - name: Cache .NET packages
         uses: actions/cache@v4
@@ -29,57 +32,76 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore MacUtilGUI/MacUtilGUI.fsproj
 
-      - name: Build and publish macOS x64
+      # Optional: forks can stay unsigned (ad-hoc) and still ship working apps.
+      # Add these repository secrets to produce a Developer ID signed build:
+      #   MACOS_CERT_P12, MACOS_CERT_PASSWORD, MACOS_SIGN_IDENTITY
+      - name: Import Developer ID certificate (optional)
+        if: ${{ secrets.MACOS_CERT_P12 != '' }}
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
         run: |
-          dotnet publish MacUtilGUI/MacUtilGUI.fsproj \
-            --configuration Release \
-            --runtime osx-x64 \
-            --self-contained true \
-            --output ./build/osx-x64 \
-            /p:PublishSingleFile=true \
-            /p:IncludeNativeLibrariesForSelfExtract=true
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
 
-      - name: Build and publish macOS ARM64
-        run: |
-          dotnet publish MacUtilGUI/MacUtilGUI.fsproj \
-            --configuration Release \
-            --runtime osx-arm64 \
-            --self-contained true \
-            --output ./build/osx-arm64 \
-            /p:PublishSingleFile=true \
-            /p:IncludeNativeLibrariesForSelfExtract=true
-
-      - name: Rename binaries
-        run: |
-          mv ./build/osx-x64/MacUtilGUI ./build/osx-x64/macutil-macos-x64
-          mv ./build/osx-arm64/MacUtilGUI ./build/osx-arm64/macutil-macos-arm64
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+            -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          rm -f "$RUNNER_TEMP/cert.p12"
+          echo "MACOS_SIGN_IDENTITY=${{ secrets.MACOS_SIGN_IDENTITY }}" >> "$GITHUB_ENV"
 
       - name: Extract Version
         id: extract_version
         run: |
           # Fetch all tags
           git fetch --tags
-          
-          # Get the latest tag, default to 0.0.0 if no tags exist
+
+          # Get the latest released tag, default to 0.0.0 if no tags exist
           latest_tag=$(git tag --sort=-version:refname | head -n1)
           if [ -z "$latest_tag" ]; then
             latest_tag="0.0.0"
           fi
-          
+
           # Parse the latest tag (assuming format X.Y.Z)
-          IFS='.' read -ra VERSION_PARTS <<< "$latest_tag"
+          IFS='.' read -ra VERSION_PARTS <<< "${latest_tag#v}"
           major=${VERSION_PARTS[0]:-0}
           minor=${VERSION_PARTS[1]:-0}
           patch=${VERSION_PARTS[2]:-0}
-          
+
           # Increment minor version by 0.1 (increment minor, reset patch to 0)
           new_minor=$((minor + 1))
           version="${major}.${new_minor}.0"
-          
+
           echo "Previous version: $latest_tag"
           echo "New version: $version"
-          echo "version=$version" >> $GITHUB_ENV
+          echo "version=$version" >> "$GITHUB_ENV"
         shell: bash
+
+      - name: Build universal .app bundle
+        env:
+          VERSION: ${{ env.version }}
+        run: |
+          chmod +x MacUtilGUI/packaging/build_app.sh
+          MacUtilGUI/packaging/build_app.sh --universal
+
+      - name: Show bundle contents
+        run: |
+          lipo -info MacUtilGUI/dist/MacUtil-Universal.app/Contents/MacOS/MacUtilGUI
+          codesign -dv MacUtilGUI/dist/MacUtil-Universal.app 2>&1 | head -10
+          ls -lh MacUtilGUI/dist
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macutil-macos-universal
+          path: MacUtilGUI/dist/*.zip
+          if-no-files-found: error
 
       - name: Create and Upload Release
         id: create_release
@@ -88,14 +110,17 @@ jobs:
           tag_name: ${{ env.version }}
           name: Pre-Release ${{ env.version }}
           body: |
-            ![GitHub Downloads (specific asset, specific tag)](https://img.shields.io/github/downloads/ChrisTitusTech/macutil/${{ env.version }}/macutil-macos-x64)
-            ![GitHub Downloads (specific asset, specific tag)](https://img.shields.io/github/downloads/ChrisTitusTech/macutil/${{ env.version }}/macutil-macos-arm64)
+            ![GitHub Downloads (specific asset, specific tag)](https://img.shields.io/github/downloads/${{ github.repository }}/${{ env.version }}/MacUtil-Universal.zip)
 
+            > [!NOTE]
+            > This build is ad-hoc signed unless the repository provides a
+            > Developer ID certificate. macOS blocks it on first launch:
+            > right click the app and choose **Open**, or run
+            > `xattr -dr com.apple.quarantine /Applications/MacUtil-Universal.app`
           append_body: true
           generate_release_notes: true
           files: |
-            ./build/osx-x64/macutil-macos-x64
-            ./build/osx-arm64/macutil-macos-arm64
+            MacUtilGUI/dist/MacUtil-Universal.zip
           prerelease: true
         env:
           version: ${{ env.version }}

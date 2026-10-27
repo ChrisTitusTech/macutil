@@ -8,15 +8,30 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     
-    <!-- Self-contained single file configuration -->
-    <PublishSingleFile>true</PublishSingleFile>
+    <!--
+      Single-file and trimming are OPT-IN (packaging/build_app.sh does not use them).
+
+      A self-contained *single-file* publish extracts the native libraries at
+      startup into ~/.net/<app>/<hash>/. On Apple Silicon macOS then refuses to
+      load them, because the extracted copy is signed ad-hoc while the host
+      process is signed with a Developer ID (and hardened runtime):
+        DllNotFoundException: libSkiaSharp ... different Team IDs
+      which makes every published build crash on M1/M2/M3/M4.
+
+      Trimming is risky here as well: Avalonia, F# and Tomlyn resolve types by
+      reflection, so the linker can silently drop types the app needs at runtime.
+
+      Keep the defaults portable; enable the old behaviour explicitly with
+        dotnet publish -p:MacUtilSingleFile=true -p:MacUtilTrim=true
+    -->
+    <PublishSingleFile Condition="'$(MacUtilSingleFile)' == 'true'">true</PublishSingleFile>
+    <PublishTrimmed Condition="'$(MacUtilTrim)' == 'true'">true</PublishTrimmed>
+    <TrimMode Condition="'$(MacUtilTrim)' == 'true'">link</TrimMode>
+    <IncludeNativeLibrariesForSelfExtract Condition="'$(MacUtilSingleFile)' == 'true'">true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile Condition="'$(MacUtilSingleFile)' == 'true'">true</EnableCompressionInSingleFile>
+    <IncludeAllContentForSelfExtract Condition="'$(MacUtilSingleFile)' == 'true'">true</IncludeAllContentForSelfExtract>
     <SelfContained>true</SelfContained>
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>link</TrimMode>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <PublishReadyToRun>true</PublishReadyToRun>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <PublishReadyToRun Condition="'$(MacUtilTrim)' == 'true'">true</PublishReadyToRun>
     <DebugType>embedded</DebugType>
     
     <!-- macOS specific properties -->

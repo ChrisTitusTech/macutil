@@ -49,3 +49,49 @@ jobs:
 
       - name: Check F# formatting
         run: fantomas --check MacUtilGUI/
+
+  bundle:
+    name: macOS app bundle (arm64 + x64)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache .NET packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      # Catches packaging regressions (single-file extraction, trimming, bad
+      # Info.plist, missing executable bit) before they reach a release.
+      - name: Build universal bundle
+        run: |
+          chmod +x MacUtilGUI/packaging/build_app.sh
+          MacUtilGUI/packaging/build_app.sh --universal
+
+      - name: Smoke test (launches and stays alive)
+        run: |
+          APP="MacUtilGUI/dist/MacUtil-Universal.app"
+          "$APP/Contents/MacOS/MacUtilGUI" > /tmp/macutil.log 2>&1 &
+          pid=$!
+          sleep 15
+          if ! kill -0 "$pid" 2>/dev/null; then
+            cat /tmp/macutil.log
+            exit 1
+          fi
+          kill "$pid"
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacUtil-Universal
+          path: MacUtilGUI/dist/*.zip
+          if-no-files-found: error

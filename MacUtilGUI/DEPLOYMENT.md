@@ -6,7 +6,7 @@ This guide explains how to build and deploy the MacUtil GUI application for macO
 
 ### Building App Bundles
 
-1. **Create the app icon** (one-time setup):
+1. **Create the app icon** (one-time setup, only needed if `MacUtilGUI.icns` is missing):
    ```bash
    ./create_icon_from_logo.sh
    ```
@@ -14,18 +14,34 @@ This guide explains how to build and deploy the MacUtil GUI application for macO
 
 2. **Build macOS app bundles**:
    ```bash
-   ./deploy_macos.sh
+   ./packaging/build_app.sh --universal        # x64 + arm64 in one .app
+   ./packaging/build_app.sh                    # current architecture only
+   ./packaging/build_app.sh --out ~/Applications
    ```
-   This creates `.app` bundles for both Intel and Apple Silicon Macs.
+
+   `deploy_macos.sh` and `build_universal.sh` are kept as thin wrappers around
+   `packaging/build_app.sh` for backwards compatibility.
 
 ## 📦 What You Get
 
-After running the deployment script, you'll find in the `./dist/` directory:
+After running the packaging script, you'll find in the `./dist/` directory:
 
-- `MacUtil-Intel.app` - For Intel-based Macs (x64)
-- `MacUtil-AppleSilicon.app` - For Apple Silicon Macs (ARM64)
+- `MacUtil-Universal.app` (with `--universal`) - runs on Intel and Apple Silicon
+- `MacUtil-arm64.app` / `MacUtil-x64.app` - single architecture builds
+- A `.zip` next to each bundle, produced with `ditto` so the executable bit and
+  symlinks survive the download.
 
 Each app bundle is **self-contained** and includes all necessary dependencies.
+
+The script also signs the bundle: ad-hoc (`-`) by default, or with a Developer ID
+when `--sign "Developer ID Application: Name (TEAMID)"` is passed, optionally
+followed by `--notarize <keychain-profile>`.
+
+> [!IMPORTANT]
+> Do not publish single-file bundles. They extract their native libraries into
+> `~/.net/<app>/<hash>/` at startup, and on Apple Silicon macOS refuses to load
+> those ad-hoc signed copies next to the Developer ID signed host process
+> (`libSkiaSharp ... different Team IDs`). See the fsproj comment and the README.
 
 ## 🔧 Project Configuration
 
