@@ -204,3 +204,45 @@ Edit `MacUtilGUI.fsproj` to modify bundle properties like:
 ---
 
 ✨ **Your Avalonia F# app is now ready for macOS deployment!** ✨
+
+## 🔐 Signing and notarizing (optional)
+
+`packaging/build_app.sh` signs ad-hoc by default, which is enough for personal
+use and for testing: macOS shows the "unidentified developer" dialog and the
+user accepts it once (right click → Open, or
+`xattr -dr com.apple.quarantine /Applications/MacUtil.app`).
+
+To ship a build that opens without any warning you need an Apple Developer
+Program membership and a **Developer ID Application** certificate.
+
+1. Xcode → Settings → Accounts → *Manage Certificates* → `+` →
+   **Developer ID Application**. Export it from Keychain Access as `.p12`.
+2. Notarization credentials, stored in the keychain once:
+
+   ```bash
+   xcrun notarytool store-credentials macutil-notary \
+     --apple-id "you@example.com" --team-id TEAMID --password "app-specific-password"
+   ```
+
+3. Build, sign and notarize:
+
+   ```bash
+   ./packaging/build_app.sh --universal \
+     --sign "Developer ID Application: Your Name (TEAMID)" \
+     --notarize macutil-notary
+   ```
+
+### In GitHub Actions
+
+Add three repository secrets and the release workflow picks them up
+automatically (without them the build simply stays ad-hoc signed):
+
+| Secret | Value |
+| --- | --- |
+| `MACOS_CERT_P12` | `base64 -i cert.p12 \| pbcopy` |
+| `MACOS_CERT_PASSWORD` | password used when exporting the `.p12` |
+| `MACOS_SIGN_IDENTITY` | `Developer ID Application: Your Name (TEAMID)` |
+
+Notarization is not automated in CI (it needs `notarytool` credentials); run the
+command above locally, or add your own `notarytool` step with the App Store
+Connect API key.
