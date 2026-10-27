@@ -13,6 +13,14 @@ module ScriptService =
 
     let assembly = Assembly.GetExecutingAssembly()
 
+    /// PATH used for every script. GUI processes get /usr/bin:/bin:/usr/sbin:/sbin
+    /// only, which hides the Homebrew prefixes (Apple Silicon and Intel).
+    let scriptPath =
+        let defaults = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        let inherited = Environment.GetEnvironmentVariable("PATH")
+
+        if String.IsNullOrEmpty(inherited) then defaults else defaults + ":" + inherited
+
     // Function to check if Terminal has Full Disk Access permission
     let checkFullDiskAccess () : bool * string =
         try
@@ -232,6 +240,9 @@ module ScriptService =
         let header = """#!/bin/bash
 # Force non-interactive mode for GUI execution
 export TERM=${TERM:-xterm-256color}
+# Apps started from Finder/LaunchServices get a minimal PATH without Homebrew,
+# so every brew based script would fail with "brew: command not found".
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH}"
 export DEBIAN_FRONTEND=noninteractive
 export CI=true
 export NONINTERACTIVE=0
@@ -539,6 +550,7 @@ set +m        # Disable job control
                             let wrapperScript = 
                                 "#!/bin/bash\n" +
                                 "export TERM=xterm-256color\n" +
+                                "export PATH=\"/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH}\"\n" +
                                 "export DEBIAN_FRONTEND=noninteractive\n" +
                                 "export CI=true\n" +
                                 "export NONINTERACTIVE=0\n" +
@@ -665,6 +677,7 @@ set +m        # Disable job control
                             
                             // Set comprehensive environment variables to handle non-TTY execution
                             startInfo.EnvironmentVariables.["TERM"] <- "xterm-256color"
+                            startInfo.EnvironmentVariables.["PATH"] <- scriptPath
                             startInfo.EnvironmentVariables.["DEBIAN_FRONTEND"] <- "noninteractive"
                             startInfo.EnvironmentVariables.["CI"] <- "true"
                             startInfo.EnvironmentVariables.["NONINTERACTIVE"] <- "1"
@@ -798,6 +811,7 @@ set +m        # Disable job control
     // Helper function to setup environment variables for non-TTY execution
     let private setupEnvironmentVariables (startInfo: ProcessStartInfo) : unit =
         startInfo.EnvironmentVariables.["TERM"] <- "xterm-256color"
+        startInfo.EnvironmentVariables.["PATH"] <- scriptPath
         startInfo.EnvironmentVariables.["DEBIAN_FRONTEND"] <- "noninteractive"
         startInfo.EnvironmentVariables.["CI"] <- "true"
         startInfo.EnvironmentVariables.["HOMEBREW_NO_ENV_HINTS"] <- "1"
