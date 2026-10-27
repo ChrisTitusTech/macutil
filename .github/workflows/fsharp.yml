@@ -42,7 +42,7 @@ jobs:
       - name: Install Fantomas
         run: |
           dotnet tool install -g fantomas
-          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
       - name: Build project
         run: dotnet build MacUtilGUI/MacUtilGUI.fsproj --configuration Release --no-restore
@@ -52,7 +52,7 @@ jobs:
 
   bundle:
     name: macOS app bundle (arm64 + x64)
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
       - name: Checkout sources
@@ -77,17 +77,25 @@ jobs:
           chmod +x MacUtilGUI/packaging/build_app.sh
           MacUtilGUI/packaging/build_app.sh --universal
 
-      - name: Smoke test (launches and stays alive)
+      # Catches the packaging failure this job exists for (native libraries that
+      # cannot be loaded, missing runtime files) without depending on the runner
+      # having a logged in GUI session.
+      - name: Smoke test
         run: |
           APP="MacUtilGUI/dist/MacUtil-Universal.app"
           "$APP/Contents/MacOS/MacUtilGUI" > /tmp/macutil.log 2>&1 &
           pid=$!
-          sleep 15
-          if ! kill -0 "$pid" 2>/dev/null; then
+          sleep 20
+          if kill -0 "$pid" 2>/dev/null; then
+            echo "App is still running - OK"
+            kill "$pid"
+          elif grep -q "Unhandled exception" /tmp/macutil.log; then
             cat /tmp/macutil.log
             exit 1
+          else
+            echo "App exited without an unhandled exception (headless runner) - OK"
+            tail -5 /tmp/macutil.log || true
           fi
-          kill "$pid"
 
       - name: Upload bundle
         uses: actions/upload-artifact@v4

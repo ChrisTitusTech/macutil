@@ -12,7 +12,14 @@ permissions:
 jobs:
   build_app:
     # macOS runner: lipo, codesign and ditto are required to build a .app bundle.
-    runs-on: macos-14
+    runs-on: macos-latest
+
+    env:
+      # `secrets` cannot be used in a step-level `if:`, so surface them here and
+      # test the environment variable instead (empty when the secrets are unset).
+      MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+      MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+      MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
 
     steps:
       - uses: actions/checkout@v5
@@ -36,10 +43,7 @@ jobs:
       # Add these repository secrets to produce a Developer ID signed build:
       #   MACOS_CERT_P12, MACOS_CERT_PASSWORD, MACOS_SIGN_IDENTITY
       - name: Import Developer ID certificate (optional)
-        if: ${{ secrets.MACOS_CERT_P12 != '' }}
-        env:
-          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
-          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        if: env.MACOS_CERT_P12 != ''
         run: |
           KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
           KEYCHAIN_PASSWORD="$(uuidgen)"
@@ -52,33 +56,37 @@ jobs:
             -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: \
             -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+
+          old_keychains="$(security list-keychains -d user | tr -d '"')"
+          # shellcheck disable=SC2086 # the list is intentionally word-split
+          security list-keychains -d user -s "$KEYCHAIN" $old_keychains
           rm -f "$RUNNER_TEMP/cert.p12"
-          echo "MACOS_SIGN_IDENTITY=${{ secrets.MACOS_SIGN_IDENTITY }}" >> "$GITHUB_ENV"
+          echo "Signing identity: ${MACOS_SIGN_IDENTITY:-<unset, using ad-hoc>}"
 
       - name: Extract Version
         id: extract_version
         run: |
-          # Fetch all tags
-          git fetch --tags
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            # Tag push: release exactly the pushed tag.
+            version="${GITHUB_REF_NAME#v}"
+          else
+            # Manual run: bump the minor version of the latest tag.
+            git fetch --tags
 
-          # Get the latest released tag, default to 0.0.0 if no tags exist
-          latest_tag=$(git tag --sort=-version:refname | head -n1)
-          if [ -z "$latest_tag" ]; then
-            latest_tag="0.0.0"
+            latest_tag=$(git tag --sort=-version:refname | head -n1)
+            if [ -z "$latest_tag" ]; then
+              latest_tag="0.0.0"
+            fi
+
+            # Parse the latest tag (assuming format X.Y.Z)
+            IFS='.' read -ra VERSION_PARTS <<< "${latest_tag#v}"
+            major=${VERSION_PARTS[0]:-0}
+            minor=${VERSION_PARTS[1]:-0}
+
+            version="${major}.$((minor + 1)).0"
+            echo "Previous version: $latest_tag"
           fi
 
-          # Parse the latest tag (assuming format X.Y.Z)
-          IFS='.' read -ra VERSION_PARTS <<< "${latest_tag#v}"
-          major=${VERSION_PARTS[0]:-0}
-          minor=${VERSION_PARTS[1]:-0}
-          patch=${VERSION_PARTS[2]:-0}
-
-          # Increment minor version by 0.1 (increment minor, reset patch to 0)
-          new_minor=$((minor + 1))
-          version="${major}.${new_minor}.0"
-
-          echo "Previous version: $latest_tag"
           echo "New version: $version"
           echo "version=$version" >> "$GITHUB_ENV"
         shell: bash
